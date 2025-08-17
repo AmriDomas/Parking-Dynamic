@@ -31,6 +31,22 @@ import streamlit as st
 from sklearn.preprocessing import LabelEncoder
 import pytz
 import holidays
+import requests
+import os
+import tempfile
+
+# ===== Helper untuk download & cache file dari URL =====
+@st.cache_data(show_spinner=False)
+def download_file(url, filename=None):
+    if filename is None:
+        filename = url.split("/")[-1]
+    cache_path = os.path.join(tempfile.gettempdir(), filename)
+    if not os.path.exists(cache_path):
+        r = requests.get(url)
+        r.raise_for_status()
+        with open(cache_path, "wb") as f:
+            f.write(r.content)
+    return cache_path
 
 
 # ====== Load model occup ======
@@ -38,10 +54,12 @@ import holidays
 def load_model_occup():
     return joblib.load("best_model_occup.pkl")
 
-# ====== Load model queue ======
-@st.cache_resource
+# ===== Load model dari Hugging Face =====
+@st.cache_resource(show_spinner=True)
 def load_model_queue():
-    return joblib.load("model_queue.pkl")
+    hf_model_url = "https://huggingface.co/11amri/parkingxgb/resolve/main/model_queue.pkl"  # ganti dengan link file model kamu di HF
+    model_path = download_file(hf_model_url)
+    return joblib.load(model_path)
 
 # ====== Load dataset ======
 @st.cache_data
@@ -878,4 +896,5 @@ elif menu == "Prediction":
 
 
                 
+
 
